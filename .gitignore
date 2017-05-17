@@ -89,3 +89,7 @@ ENV/
 .ropeproject
 
 training_data/
+features/
+.npy
+.pkl
+.DS_Store
