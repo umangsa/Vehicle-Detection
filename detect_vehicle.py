@@ -71,7 +71,7 @@ def feature_extraction(color_space, spatial_size, hist_bins,
 
     return X, y
 
-def process_image(image, heat_threshold = 4, png = False):
+def process_image(image, heat_threshold = 4, png = False, debug = False):
     # return detect_cars(image, color_space = color_space, clf = clf, 
     #     X_scaler = X_scaler, orient = orient, pix_per_cell = pix_per_cell, 
     #     cell_per_block = cell_per_block, spatial_size = spatial_size, 
@@ -95,7 +95,7 @@ def process_image(image, heat_threshold = 4, png = False):
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
 
     # Add heat to each box in box list
-    heat = add_heat(heat, hot_windows)  
+    heat = add_heat(heat, hot_windows) 
 
     heatmaps.append(heat)
     heatmap_sum = sum(heatmaps)
@@ -108,7 +108,29 @@ def process_image(image, heat_threshold = 4, png = False):
 
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
-    return draw_labeled_bboxes(draw_image, labels)
+
+    detections =  draw_labeled_bboxes(draw_image, labels)
+
+    if debug:
+        plt.subplot(232)
+        window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6) 
+        plt.imshow(window_img)
+        plt.title("Hot boxes")
+
+        plt.subplot(233)
+        plt.imshow(heatmap, cmap='hot')
+        plt.title('Heat Map')
+
+        plt.subplot(234)
+        plt.imshow(labels[0], cmap='gray')
+        title = str(labels[1]) + ' cars found'
+        plt.title(title)
+
+        plt.subplot(235)
+        plt.imshow(detections)
+        plt.title("Detected Cars")
+
+    return detections
 
 
 
@@ -123,6 +145,7 @@ if FEATURE_EXTRACTION:
     t2 = time.time()
     print("Feature extraction time ", round(t2-t, 2))
 else:
+    print("Loading features")
     X = np.load("features/image_features.npy")
     y = np.load("features/labels.npy")
 
@@ -187,16 +210,22 @@ i = 1
 for filename in glob.iglob('test_images/*.jpg'):
     image = mpimg.imread(filename)
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
+    
+    fig = plt.figure(figsize=(16, 9))
+    plt.subplot(231)
+    plt.imshow(image)
+    plt.title(filename)
+
 
     t=time.time()
-    window_img = process_image(image, heat_threshold = 1, png = False)
+    window_img = process_image(image, heat_threshold = 1, png = False, debug = True)
     t2 = time.time()
     print("Detection time = {}".format(t2-t))
 
 
     # window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)                    
 
-    plt.imshow(window_img)
+    # plt.imshow(window_img)
     plt.savefig("output_images/test" + str(i) + ".jpg")
     i += 1
 
