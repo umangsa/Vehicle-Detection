@@ -82,6 +82,11 @@ Ultimately I searched on 3 scales using YCrCb 3-channel HOG features plus spatia
 ![alt text][image4]
 
 ---
+To optimize the performance, the main work that I did was creating a region of interest based on the scale I chose. For smaller scales, I was processing only pixels between 400 - 500 in the Y axis and 350 - 1280 in the X. This improved the speed to a large extend. Following are the ROI for each scale that I used.
+
+scales = [1.25, 1.5, 2.0]
+ystart_stop = [[400, 500], [400, 550], [500, 656]]
+xstart_stop = [[350, 1280], [250, 1280], [250, 1280]]
 
 ### Video Implementation
 
@@ -96,6 +101,10 @@ Here's a [link to my video result](./output_images/project_video.mp4)
 I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
 I also used the LinearSVC.decision_function(test_features) (`helper_functions.py` line 235 to find the probability of the prediction. I set a threshold of >= 0.1 to filter out false postivies in the box detections
+
+I summed the heamaps for the last 10 frames and applied a threshold of > 4 to consider it as a valid detection. This has a good effect on reducing false positives.
+
+The region of interest strategy mentioned earlier was also very helpful in reducing false positives. I was earlier detecting few cars, especially near the 2nd bridge, from the oncoming lane. These were getting ignored once I applied the ROI
 
 Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
@@ -113,5 +122,16 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+Some of the challenges that I faced in the project:
 
+- Unable to detect cars as they enter the view on the right. They are detected only when the car is visible 3 quarters. One of the ways to solve this would be to add more training data with front portions of the cars visible. Currently, most of the data is biased towards back portions of the car
+
+- False positive detections. I have effectively filtered out all the false positives in the project video. However, this was a very simple video. In complex images, there is a very high likelyhood of seeing false positives. A more intelligent way of dealing with them would be very useful
+
+- This pipeline may fail if there are sharp left turns and there is a vehicle in that space. My ROI assumes that there will be oncoming lane on the left and does not take into account sharp left turns
+
+- Utilizing deep learning would make this more robust. This would definately be the choice for future
+
+- In my past experience and also on the Udacity forums, it is apparent the sklearn is very slow for image processing. It would be better to use opencv for doing the HOG extraction. This would have a considerable improvement towards running the detection at a much faster rate
+
+- Another option to make this code run faster on a good laptop would be to use multi threading. Currently, my code runs at 5 fps. The various stages of the pipeline can be split into 3-4 blocks. Each block runs sequentially taking output from the previous block. This would also need a different application architecture as movie.py outputs a single frame at a time and expects the result of the pipeline before it can give the next frame. 
