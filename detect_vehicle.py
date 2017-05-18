@@ -30,8 +30,8 @@ hist_bins = 32    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
-ystart = 400
-ystop = 656
+# ystart = 400
+# ystop = 656
 ystart_stop = [[400, 500], [400, 550], [500, 656]]
 xstart_stop = [[350, 1280], [250, 1280], [250, 1280]]
 scales = [1.25, 1.5, 2.0]
@@ -72,10 +72,6 @@ def feature_extraction(color_space, spatial_size, hist_bins,
     return X, y
 
 def process_image(image, heat_threshold = 4, png = False, debug = False):
-    # return detect_cars(image, color_space = color_space, clf = clf, 
-    #     X_scaler = X_scaler, orient = orient, pix_per_cell = pix_per_cell, 
-    #     cell_per_block = cell_per_block, spatial_size = spatial_size, 
-    #     hist_bins = hist_bins)
     hot_windows = []
     draw_image = np.copy(image)
 
@@ -162,9 +158,6 @@ rand_state = np.random.randint(0, 100)
 X_train, X_valid, y_train, y_valid = train_test_split(
     scaled_X, y, test_size=0.2, random_state=rand_state)
 
-# splitter = TimeSeriesSplit(n_splits=2)
-# X_train, X_valid  = splitter.split(scaled_X)
-# y_train, y_valid  = splitter.split(y)
 
 if PRE_TRAINED_CLASSIFIER:
     clf = joblib.load('features/classifier.pkl')
@@ -176,8 +169,9 @@ else:
         # parameters = {'C':[0.01, 0.1, 1, 10, 100]}
         parameters = { 'C':[0.0001, 0.001, 0.01]}
         # Use a linear SVC 
-        # svc = LinearSVC()
         svc = LinearSVC()
+
+        # search for best parameters
         clf = GridSearchCV(svc, parameters)
 
         # Check the training time for the SVC
@@ -222,10 +216,6 @@ for filename in glob.iglob('test_images/*.jpg'):
     t2 = time.time()
     print("Detection time = {}".format(t2-t))
 
-
-    # window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)                    
-
-    # plt.imshow(window_img)
     plt.savefig("output_images/test" + str(i) + ".jpg")
     i += 1
 
